@@ -1,0 +1,468 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <meta name="theme-color" content="#000000">
+  <title>Forms of Living · dual row loop</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    html, body {
+      height: 100%;
+      height: 100dvh;
+      overflow: hidden;
+      background: #000;
+      user-select: none;
+      -webkit-user-select: none;
+      touch-action: none;
+      -webkit-touch-callout: none;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    .gallery {
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      height: 100dvh;
+      gap: 0;
+      position: relative;
+      padding-top: env(safe-area-inset-top, 0px);
+      padding-bottom: env(safe-area-inset-bottom, 0px);
+      perspective: 1200px;
+      perspective-origin: 50% 50%;
+      transform-style: preserve-3d;
+    }
+
+    .row {
+      display: flex;
+      flex-direction: row;
+      align-items: stretch;
+      white-space: nowrap;
+      overflow: hidden;
+      position: relative;
+      height: 29vh;
+      flex: 0 0 29vh;
+      margin: 0;
+      padding: 0;
+      transform-style: preserve-3d;
+    }
+
+    .row-top { perspective-origin: 50% 100%; }
+    .row-bottom { perspective-origin: 50% 0%; }
+
+    .row-track {
+      display: flex;
+      flex-direction: row;
+      align-items: stretch;
+      will-change: transform;
+      margin: 0;
+      padding: 0;
+      transform-style: preserve-3d;
+    }
+
+    .img-cell {
+      position: relative;
+      flex: 0 0 auto;
+      height: 29vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      margin: 0;
+      padding: 0;
+      transform-style: preserve-3d;
+    }
+
+    .row-top .img-cell { justify-content: flex-end; }
+    .row-bottom .img-cell { justify-content: flex-start; }
+
+    .img-wrap {
+      height: 24vh;
+      flex: 0 0 24vh;
+      width: 19.2vh;
+      max-width: 45vw;
+      overflow: hidden;
+      display: block;
+      margin: 0;
+      padding: 0;
+      line-height: 0;
+      position: relative;
+      transform-style: preserve-3d;
+      will-change: transform, filter;
+      transform-origin: 50% 50%;
+    }
+
+    .img-wrap img {
+      width: 100%;
+      height: 100%;
+      display: block;
+      margin: 0;
+      padding: 0;
+      object-fit: cover;
+      -webkit-user-drag: none;
+      pointer-events: none;
+      border-radius: 0;
+      background: transparent;
+      border: none;
+      outline: none;
+      box-shadow: none;
+    }
+
+    .annotation {
+      height: 5vh;
+      flex: 0 0 5vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: #fff;
+      font-family: 'Inter', system-ui, sans-serif;
+      font-size: 9px;
+      font-weight: 400;
+      letter-spacing: 0.24em;
+      text-transform: uppercase;
+      white-space: nowrap;
+      pointer-events: none;
+      opacity: 0;
+      filter: blur(4px);
+      will-change: opacity, filter;
+      text-shadow: none;
+    }
+
+    .static-text {
+      position: absolute;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 100%;
+      max-width: 100%;
+      text-align: center;
+      color: #555;
+      font-family: 'Inter', system-ui, sans-serif;
+      font-size: 10px;
+      font-weight: 300;
+      letter-spacing: 0.16em;
+      text-transform: uppercase;
+      line-height: 1.8;
+      pointer-events: none;
+      user-select: none;
+      padding: 0 5vw;
+    }
+
+    .static-text.top { top: calc(4vh + env(safe-area-inset-top, 0px)); }
+    .static-text.bottom { bottom: calc(4vh + env(safe-area-inset-bottom, 0px)); }
+
+    @media (hover: none) and (pointer: coarse) {
+      .annotation { font-size: 10px; letter-spacing: 0.28em; }
+      .static-text { font-size: 11px; letter-spacing: 0.18em; }
+    }
+  </style>
+</head>
+<body>
+  <div class="gallery">
+    <div class="row row-top" id="rowTop">
+      <div class="row-track" id="trackTop"></div>
+    </div>
+    <div class="row row-bottom" id="rowBottom">
+      <div class="row-track" id="trackBottom"></div>
+    </div>
+  </div>
+
+  <div class="static-text top">Forms of Living</div>
+  <div class="static-text bottom">Selected Works · Index 01—20</div>
+
+  <script>
+    (function() {
+      // IMAGE FILES
+      // Upload these files to an "images" folder beside this HTML file in your GitHub repository.
+      const topImages = [
+        'images/t01.jpg',
+        'images/t02.jpg',
+        'images/t03.jpg',
+        'images/t04.jpg',
+        'images/t05.jpg',
+        'images/t06.jpg',
+        'images/t07.jpg',
+        'images/t08.jpg',
+        'images/t09.jpg',
+        'images/t10.jpg'
+      ];
+
+      const bottomImages = [
+        'images/b01.jpg',
+        'images/b02.jpg',
+        'images/b03.jpg',
+        'images/b04.jpg',
+        'images/b05.jpg',
+        'images/b06.jpg',
+        'images/b07.jpg',
+        'images/b08.jpg',
+        'images/b09.jpg',
+        'images/b10.jpg'
+      ];
+
+      // IMAGE DESCRIPTIONS
+      // Replace the text in each pair of quotes with the caption for that image.
+      // Keep the order aligned with the image lists above.
+      const topLabels = [
+        '01',
+        '02',
+        '03',
+        '04',
+        '05',
+        '06',
+        '07',
+        '08',
+        '09',
+        '10'
+      ];
+
+      const bottomLabels = [
+        '11',
+        '12',
+        '13',
+        '14',
+        '15',
+        '16',
+        '17',
+        '18',
+        '19',
+        '20'
+      ];
+
+      const COUNT = 10;
+      const baseSpeed = 0.7;
+      const friction = 0.94;
+
+      const trackTop = document.getElementById('trackTop');
+      const trackBottom = document.getElementById('trackBottom');
+      const rowTop = document.getElementById('rowTop');
+      const rowBottom = document.getElementById('rowBottom');
+
+      function buildRow(track, imageList, labels, variant) {
+        track.innerHTML = '';
+        for (let copy = 0; copy < 3; copy++) {
+          imageList.forEach((src, i) => {
+            const cell = document.createElement('div');
+            cell.className = 'img-cell';
+            const wrap = document.createElement('div');
+            wrap.className = 'img-wrap';
+            const img = document.createElement('img');
+            img.src = src;
+            img.alt = '';
+            img.loading = 'eager';
+            img.addEventListener('load', () => { measureSoon(); });
+            wrap.appendChild(img);
+            const ann = document.createElement('span');
+            ann.className = 'annotation';
+            ann.textContent = labels[i];
+            if (variant === 'top') {
+              cell.appendChild(ann);
+              cell.appendChild(wrap);
+            } else {
+              cell.appendChild(wrap);
+              cell.appendChild(ann);
+            }
+            track.appendChild(cell);
+          });
+        }
+      }
+      buildRow(trackTop, topImages, topLabels, 'top');
+      buildRow(trackBottom, bottomImages, bottomLabels, 'bottom');
+
+      let imgWidth = 0, singleWidthTop = 0, singleWidthBottom = 0;
+      let measureQueued = false;
+
+      function measureSoon() {
+        if (measureQueued) return;
+        measureQueued = true;
+        requestAnimationFrame(() => {
+          measureQueued = false;
+          measure();
+        });
+      }
+
+      function measure() {
+        const kidsTop = trackTop.children;
+        if (kidsTop.length === 0) return;
+        let topSum = 0;
+        for (let i = 0; i < COUNT; i++) {
+          topSum += kidsTop[i].getBoundingClientRect().width;
+        }
+        imgWidth = kidsTop[0].getBoundingClientRect().width;
+        if (imgWidth <= 0) return;
+        singleWidthTop = topSum;
+
+        const kidsBottom = trackBottom.children;
+        let botSum = 0;
+        for (let i = 0; i < COUNT; i++) {
+          botSum += kidsBottom[i].getBoundingClientRect().width;
+        }
+        singleWidthBottom = botSum;
+
+        top.offset = normalizeNeg(top.offset, singleWidthTop);
+        bottom.offset = normalizeNeg(bottom.offset, singleWidthBottom);
+      }
+
+      function normalizeNeg(offset, w) {
+        if (w <= 0) return offset;
+        let o = offset % w;
+        if (o > 0) o -= w;
+        if (o <= -w) o += w;
+        return o;
+      }
+
+      const top = { offset: 0, velocity: 0, dragging: false, moved: false, lastX: 0, lastMoveTime: 0, downX: 0, downY: 0, downTime: 0, paused: false, lastTransform: null };
+      const bottom = { offset: 0, velocity: 0, dragging: false, moved: false, lastX: 0, lastMoveTime: 0, downX: 0, downY: 0, downTime: 0, paused: false, lastTransform: null };
+
+      window.addEventListener('load', () => {
+        measure();
+        setTimeout(measure, 100);
+        setTimeout(measure, 500);
+        setTimeout(measure, 1500);
+        requestAnimationFrame(tick);
+      });
+      window.addEventListener('resize', measure);
+      window.addEventListener('orientationchange', () => {
+        setTimeout(measure, 200);
+        setTimeout(measure, 600);
+      });
+
+      const filterState = new WeakMap();
+      const transformState = new WeakMap();
+
+      function applyEffects(track, offset, vw, isTop) {
+        const centerX = vw / 2;
+        const startBlur = 60, influence = vw * 0.6, maxBlur = 6;
+        const annStart = 200, annFull = 60;
+        const kids = track.children;
+        let cursor = 0;
+        for (let i = 0; i < kids.length; i++) {
+          const cell = kids[i];
+          const w = cell.getBoundingClientRect().width;
+          const img = cell.querySelector('img');
+          const wrap = cell.querySelector('.img-wrap');
+          const ann = cell.querySelector('.annotation');
+          const centerOfImage = offset + cursor + (w / 2);
+          const dist = Math.abs(centerOfImage - centerX);
+          const side = centerOfImage < centerX ? -1 : 1;
+
+          let t = 0;
+          if (dist > startBlur) {
+            t = Math.min(1, (dist - startBlur) / (influence - startBlur));
+          }
+
+          // blur only — color stays
+          const blur = t * maxBlur;
+          const val = `blur(${blur.toFixed(1)}px)`;
+          const prevFilter = filterState.get(img);
+          if (prevFilter !== val) { img.style.filter = val; filterState.set(img, val); }
+
+          // GENTLER perspective bend
+          const rotY = side * t * 14;         // up to 14° at the far edge
+          const rotX = (isTop ? 1 : -1) * t * 3; // up to 3° vertical tilt
+          const scale = 1 - t * 0.06;         // shrink to 94% into the distance
+          const translateZ = -t * 30;         // push back slightly
+
+          const transformStr = `perspective(1100px) rotateY(${rotY.toFixed(2)}deg) rotateX(${rotX.toFixed(2)}deg) translateZ(${translateZ.toFixed(1)}px) scale(${scale.toFixed(3)})`;
+          const prevT = transformState.get(wrap);
+          if (prevT !== transformStr) { wrap.style.transform = transformStr; transformState.set(wrap, transformStr); }
+
+          // label fade
+          let annOpacity = 0, annBlur = 4;
+          if (dist < annStart) {
+            const ta = Math.min(1, Math.max(0, (annStart - dist) / (annStart - annFull)));
+            annOpacity = ta; annBlur = (1 - ta) * 4;
+          }
+          const oStr = annOpacity.toFixed(2), bStr = `blur(${annBlur.toFixed(1)}px)`;
+          if (ann.style.opacity !== oStr) ann.style.opacity = oStr;
+          if (ann.style.filter !== bStr) ann.style.filter = bStr;
+
+          cursor += w;
+        }
+      }
+
+      let lastTime = performance.now(), effectTick = 0;
+
+      function setTransform(track, state, offset) {
+        const t = `translate3d(${offset}px, 0, 0)`;
+        if (state.lastTransform !== t) { track.style.transform = t; state.lastTransform = t; }
+      }
+
+      function tick(now) {
+        if (!now) now = performance.now();
+        let dt = now - lastTime; if (dt > 50) dt = 50;
+        lastTime = now;
+        const fs = dt / 16.6667;
+
+        if (singleWidthTop > 0) {
+          if (!top.dragging && !top.paused) {
+            top.offset -= (baseSpeed + top.velocity) * fs;
+            top.velocity *= Math.pow(friction, fs);
+            if (Math.abs(top.velocity) < 0.01) top.velocity = 0;
+          }
+          top.offset = normalizeNeg(top.offset, singleWidthTop);
+          setTransform(trackTop, top, top.offset);
+        }
+
+        if (singleWidthBottom > 0) {
+          if (!bottom.dragging && !bottom.paused) {
+            bottom.offset += (baseSpeed + bottom.velocity) * fs;
+            bottom.velocity *= Math.pow(friction, fs);
+            if (Math.abs(bottom.velocity) < 0.01) bottom.velocity = 0;
+          }
+          bottom.offset = normalizeNeg(bottom.offset, singleWidthBottom);
+          setTransform(trackBottom, bottom, bottom.offset);
+        }
+
+        if (++effectTick % 2 === 0) {
+          const vw = window.innerWidth;
+          if (singleWidthTop > 0) {
+            applyEffects(trackTop, top.offset, vw, true);
+            applyEffects(trackBottom, bottom.offset, vw, false);
+          }
+        }
+        requestAnimationFrame(tick);
+      }
+
+      function attachRowHandlers(rowEl, state, isBottom) {
+        rowEl.addEventListener('pointerdown', (e) => {
+          state.dragging = true; state.moved = false;
+          state.downX = e.clientX; state.downY = e.clientY;
+          state.downTime = performance.now();
+          state.lastX = e.clientX; state.lastMoveTime = performance.now();
+          state.velocity = 0;
+        });
+        rowEl.addEventListener('pointermove', (e) => {
+          if (!state.dragging) return;
+          const dx = e.clientX - state.lastX;
+          const now = performance.now(); const dt = Math.max(1, now - state.lastMoveTime);
+          if (Math.abs(e.clientX - state.downX) > 8 || Math.abs(e.clientY - state.downY) > 8) state.moved = true;
+          if (state.moved) {
+            state.paused = false;
+            state.offset += dx;
+            state.velocity = (isBottom ? 1 : -1) * (dx / dt * 16);
+            state.lastX = e.clientX; state.lastMoveTime = now;
+          }
+        });
+        rowEl.addEventListener('pointerup', (e) => {
+          const dt = performance.now() - state.downTime;
+          const quick = dt < 400;
+          const still = Math.abs(e.clientX - state.downX) < 8 && Math.abs(e.clientY - state.downY) < 8;
+          state.dragging = false;
+          if (quick && still) { state.paused = !state.paused; state.velocity = 0; }
+          else if (state.moved) state.paused = false;
+        });
+        rowEl.addEventListener('pointercancel', () => { state.dragging = false; });
+      }
+
+      attachRowHandlers(rowTop, top, false);
+      attachRowHandlers(rowBottom, bottom, true);
+      document.addEventListener('contextmenu', e => e.preventDefault());
+      document.addEventListener('dragstart', e => e.preventDefault());
+
+      requestAnimationFrame(tick);
+    })();
+  </script>
+</body>
+</html>
