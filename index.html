@@ -173,21 +173,24 @@
     .static-text.top { top: calc(4vh + env(safe-area-inset-top, 0px)); }
     .static-text.bottom { bottom: calc(4vh + env(safe-area-inset-bottom, 0px)); }
 
-    .static-text.top .title-line {
+    /* author + advisor on one centered line; advisor clearly dimmer */
+    .static-text.top .names-line {
       display: block;
+      margin-bottom: 0.8em;
+      letter-spacing: 0.24em;
+    }
+    .static-text.top .names-line .author {
       color: #ddd;
       font-weight: 500;
-      letter-spacing: 0.28em;
-      margin-bottom: 0.3em;
     }
-
-    .static-text.top .advisor-line {
-      display: block;
-      color: #888;
+    .static-text.top .names-line .sep {
+      color: #3a3a3a;
+      margin: 0 0.6em;
       font-weight: 300;
-      font-size: 8px;
-      letter-spacing: 0.22em;
-      margin-bottom: 1em;
+    }
+    .static-text.top .names-line .advisor {
+      color: #555;
+      font-weight: 300;
     }
 
     .static-text.top .statement { display: block; }
@@ -285,8 +288,7 @@
     @media (hover: none) and (pointer: coarse) {
       .annotation { font-size: 10px; letter-spacing: 0.28em; max-width: 45vw; }
       .static-text { font-size: 10px; letter-spacing: 0.22em; }
-      .static-text.top .title-line { font-size: 11px; }
-      .static-text.top .advisor-line { font-size: 9px; }
+      .static-text.top .names-line { font-size: 10px; }
       .citations { font-size: 10px; letter-spacing: 0.18em; }
     }
   </style>
@@ -304,8 +306,9 @@
     </div>
 
     <div class="static-text top" id="staticTop">
-      <span class="title-line">Wells Lamhaouar</span>
-      <span class="advisor-line">Thesis Advisor · Chris Bardt</span>
+      <span class="names-line">
+        <span class="author">Wells Lamhaouar</span><span class="sep">·</span><span class="advisor">Chris Bardt</span>
+      </span>
       <span class="statement">Textiles act as a second skin, forming an intimate boundary between ourselves and the outside world while shaping our sense of protection, exposure, and identity.</span>
     </div>
     <div class="static-text bottom" id="staticBottom">85% of discarded textiles end up in landfills or are incinerated. 60%-67% are synthetic (polyester, nylon, and acrylic).</div>
