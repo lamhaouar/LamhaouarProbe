@@ -29,8 +29,8 @@
       display: flex;
       flex-direction: column;
       justify-content: center;
-      transition: filter 0.25s ease;
-      will-change: filter;
+      transition: filter 0.25s ease, opacity 0.6s ease;
+      will-change: filter, opacity;
     }
 
     .gallery {
@@ -213,6 +213,22 @@
       50%      { transform: translateX(-50%) translateY(4px); }
     }
 
+    .page-arrow {
+      position: fixed;
+      left: 50%;
+      bottom: calc(3.5vh + env(safe-area-inset-bottom, 0px));
+      transform: translateX(-50%);
+      color: #aaa;
+      opacity: 0;
+      transition: opacity 0.6s ease, transform 0.35s ease;
+      animation: cue-bob 2.2s ease-in-out infinite;
+      pointer-events: none;
+      z-index: 25;
+    }
+    .page-arrow svg { display: block; width: 18px; height: 18px; }
+    .page-arrow.visible { opacity: 0.7; }
+    .page-arrow.hidden { opacity: 0; transform: translateX(-50%) translateY(6px); }
+
     .scroll-layer {
       position: fixed;
       inset: 0;
@@ -230,17 +246,19 @@
       pointer-events: none;
     }
 
-    .scroll-top-spacer {
+    .page {
+      position: relative;
       width: 100%;
       height: 100dvh;
+      min-height: 100dvh;
       pointer-events: none;
     }
 
-    .citations {
-      position: relative;
-      width: 100%;
-      min-height: 100dvh;
-      padding: calc(10vh + env(safe-area-inset-top, 0px)) 8vw calc(10vh + env(safe-area-inset-bottom, 0px));
+    .key-page {
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      padding: calc(8vh + env(safe-area-inset-top, 0px)) 8vw calc(12vh + env(safe-area-inset-bottom, 0px));
       color: #999;
       font-family: 'Inter', system-ui, sans-serif;
       font-size: 10px;
@@ -248,25 +266,14 @@
       letter-spacing: 0.16em;
       text-transform: uppercase;
       line-height: 2;
-      text-align: left;
       text-shadow: 0 1px 2px rgba(0,0,0,0.9), 0 0 6px rgba(0,0,0,0.7);
-      background: linear-gradient(
-        to bottom,
-        rgba(0,0,0,0) 0%,
-        rgba(0,0,0,0.6) 30%,
-        rgba(0,0,0,0.9) 60%,
-        rgba(0,0,0,0.98) 100%
-      );
       opacity: 0;
-      transition: opacity 0.3s linear;
-      pointer-events: none;
+      transition: opacity 0.6s ease;
     }
-    .citations.visible {
-      opacity: 1;
-    }
-
-    .citations .group { margin-bottom: 1.6em; }
-    .citations .group-title {
+    .key-page.visible { opacity: 1; }
+    .key-page.faded { opacity: 0; }
+    .key-page .group { margin-bottom: 1.6em; }
+    .key-page .group-title {
       display: block;
       color: #ccc;
       font-weight: 400;
@@ -275,20 +282,51 @@
       margin-bottom: 0.4em;
       border-bottom: 1px solid rgba(255,255,255,0.12);
     }
-    .citations .cite {
+    .key-page .cite {
       display: flex;
       gap: 0.8em;
       white-space: normal;
       padding: 0.35em 0;
     }
-    .citations .cite .num { color: #ccc; flex: 0 0 auto; min-width: 2.4em; }
-    .citations .cite .name { color: #999; }
+    .key-page .cite .num { color: #ccc; flex: 0 0 auto; min-width: 2.4em; }
+    .key-page .cite .name { color: #999; }
+
+    .statements-page {
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      padding: calc(12vh + env(safe-area-inset-top, 0px)) 10vw calc(16vh + env(safe-area-inset-bottom, 0px));
+      gap: 22vh;
+      text-align: center;
+    }
+    .statements-page .statement-line {
+      color: #666;
+      font-family: 'Inter', system-ui, sans-serif;
+      font-size: 9px;
+      font-weight: 400;
+      letter-spacing: 0.2em;
+      text-transform: uppercase;
+      line-height: 1.9;
+      max-width: 80vw;
+      opacity: 0;
+      filter: blur(4px);
+      transform: translateY(6px);
+      transition: opacity 0.6s ease, filter 0.6s ease, transform 0.6s ease;
+      will-change: opacity, filter, transform;
+    }
+    .statements-page .statement-line.visible {
+      opacity: 1;
+      filter: blur(0);
+      transform: translateY(0);
+    }
 
     @media (hover: none) and (pointer: coarse) {
       .annotation { font-size: 10px; letter-spacing: 0.28em; max-width: 45vw; }
       .static-text { font-size: 10px; letter-spacing: 0.22em; }
       .static-text.top .names-line { font-size: 10px; }
-      .citations { font-size: 10px; letter-spacing: 0.18em; }
+      .key-page { font-size: 10px; letter-spacing: 0.18em; }
+      .statements-page .statement-line { font-size: 10px; letter-spacing: 0.22em; }
     }
   </style>
 </head>
@@ -319,10 +357,25 @@
     </svg>
   </div>
 
+  <div class="page-arrow" id="keyArrow" aria-hidden="true">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M6 9l6 6 6-6" />
+    </svg>
+  </div>
+
   <div class="scroll-layer" id="scrollLayer">
     <div class="scroll-content">
-      <div class="scroll-top-spacer"></div>
-      <div class="citations" id="citations"></div>
+      <div class="page scroll-top-spacer"></div>
+
+      <div class="page key-page" id="keyPage">
+        <div id="keyContent"></div>
+      </div>
+
+      <div class="page statements-page" id="statementsPage">
+        <div class="statement-line">Placeholder sentence one. This line will hold the first statement for the third page, set at the same weight and spacing as the statistics above.</div>
+        <div class="statement-line">Placeholder sentence two. Another line here, spaced apart so each statement has room to breathe against the black.</div>
+        <div class="statement-line">Placeholder sentence three. The final statement closes the page, matching the typographic rhythm of the rest.</div>
+      </div>
     </div>
   </div>
 
@@ -362,7 +415,7 @@
         { num: '16', name: 'Placeholder image 16' },
         { num: '17', name: 'Placeholder image 17' },
         { num: '18', name: 'Placeholder image 18' },
-        { num: '19', name: 'Placeholder image 19' },
+        { num: '19', name: 'Placeholder image 19' }
       ];
 
       const TOP_COUNT = topImages.length;
@@ -374,14 +427,18 @@
       const trackTop = document.getElementById('trackTop');
       const trackBottom = document.getElementById('trackBottom');
       const scrollLayer = document.getElementById('scrollLayer');
-      const citationsEl = document.getElementById('citations');
+      const keyContent = document.getElementById('keyContent');
+      const keyPage = document.getElementById('keyPage');
+      const keyArrow = document.getElementById('keyArrow');
+      const statementsPage = document.getElementById('statementsPage');
+      const statementLines = statementsPage.querySelectorAll('.statement-line');
       const appEl = document.getElementById('app');
       const staticTop = document.getElementById('staticTop');
       const staticBottom = document.getElementById('staticBottom');
       const scrollCue = document.getElementById('scrollCue');
 
-      function buildCitations() {
-        citationsEl.innerHTML = '';
+      function buildKey() {
+        keyContent.innerHTML = '';
         function makeGroup(title, items) {
           const group = document.createElement('div');
           group.className = 'group';
@@ -402,12 +459,12 @@
             row.appendChild(nm);
             group.appendChild(row);
           });
-          citationsEl.appendChild(group);
+          keyContent.appendChild(group);
         }
         makeGroup('Top Row · 01–09', topCitations);
         makeGroup('Bottom Row · 10–19', bottomCitations);
       }
-      buildCitations();
+      buildKey();
 
       function buildRow(track, imageList, labels, variant) {
         track.innerHTML = '';
@@ -504,7 +561,18 @@
         lastTopTransform: null,
         lastBottomTransform: null,
         appBlur: 0,
+        appOpacity: '1',
         textOpacity: 1,
+        keyVisible: false,
+        keyFaded: false,
+        arrowVisible: false,
+        arrowHidden: false,
+        statementsVisible: [false, false, false],
+        locked: false,
+        unlockAt: 0,
+        lockTarget: 0,
+        lockSettling: false,
+        lockTriggered: false
       };
 
       const drag = {
@@ -516,7 +584,7 @@
         downY: 0,
         downTime: 0,
         topVelocity: 0,
-        bottomVelocity: 0,
+        bottomVelocity: 0
       };
 
       window.addEventListener('load', () => {
@@ -594,13 +662,51 @@
       const SCROLL_DRIVE = 1.4;
       const BLUR_RANGE = 260;
       const MAX_APP_BLUR = 8;
-      const CITE_REVEAL = 40;
+
+      const LOCK_DURATION = 3000;
+      const UNLOCK_LEEWAY = 40;
 
       function tick(now) {
         if (!now) now = performance.now();
         let dt = now - lastTime; if (dt > 50) dt = 50;
         lastTime = now;
         const fs = dt / 16.6667;
+
+        const vh = window.innerHeight;
+        const keyTop = keyPage.offsetTop;
+        const keyBottom = keyTop + keyPage.offsetHeight;
+        const statementsTop = statementsPage.offsetTop;
+
+        if (!state.lockTriggered && scrollLayer.scrollTop > keyTop - vh * 0.15) {
+          state.lockTriggered = true;
+          state.locked = true;
+          state.unlockAt = now + LOCK_DURATION;
+          state.lockTarget = keyTop;
+          state.lockSettling = true;
+        }
+
+        if (state.locked) {
+          const cur = scrollLayer.scrollTop;
+          if (state.lockSettling) {
+            const diff = state.lockTarget - cur;
+            if (Math.abs(diff) < 0.5) {
+              scrollLayer.scrollTop = state.lockTarget;
+              state.lockSettling = false;
+            } else {
+              scrollLayer.scrollTop = cur + diff * 0.2 * fs;
+            }
+          } else {
+            if (cur < state.lockTarget) {
+              scrollLayer.scrollTop = state.lockTarget;
+            } else if (cur > state.lockTarget + UNLOCK_LEEWAY) {
+              scrollLayer.scrollTop = state.lockTarget + UNLOCK_LEEWAY;
+            }
+          }
+          if (now >= state.unlockAt) {
+            state.locked = false;
+            state.lockSettling = false;
+          }
+        }
 
         const scrollTop = scrollLayer.scrollTop;
         const scrollDelta = scrollTop - state.lastScrollTop;
@@ -646,16 +752,56 @@
           staticBottom.style.opacity = textOpacity;
         }
 
-        if (scrollTop > CITE_REVEAL) {
-          citationsEl.classList.add('visible');
-        } else {
-          citationsEl.classList.remove('visible');
-        }
-
         if (scrollTop > 12) {
           scrollCue.classList.add('hidden');
         } else {
           scrollCue.classList.remove('hidden');
+        }
+
+        const fadeStart = statementsTop - vh * 0.85;
+        const fadeEnd = statementsTop - vh * 0.15;
+        let appOpacity = 1;
+        if (scrollTop >= fadeEnd) {
+          appOpacity = 0;
+        } else if (scrollTop > fadeStart) {
+          appOpacity = 1 - (scrollTop - fadeStart) / (fadeEnd - fadeStart);
+        }
+        const appOpStr = appOpacity.toFixed(2);
+        if (state.appOpacity !== appOpStr) {
+          state.appOpacity = appOpStr;
+          appEl.style.opacity = appOpStr;
+        }
+
+        const keyInView = scrollTop > keyTop - vh * 0.6 && scrollTop < keyBottom;
+        if (keyInView !== state.keyVisible) {
+          state.keyVisible = keyInView;
+          keyPage.classList.toggle('visible', keyInView);
+        }
+        const keyShouldFade = scrollTop >= fadeStart;
+        if (keyShouldFade !== state.keyFaded) {
+          state.keyFaded = keyShouldFade;
+          keyPage.classList.toggle('faded', keyShouldFade);
+        }
+
+        const arrowShouldShow = state.lockTriggered && !state.locked && scrollTop > keyTop - vh * 0.3 && scrollTop < statementsTop - vh * 0.15;
+        if (arrowShouldShow !== state.arrowVisible) {
+          state.arrowVisible = arrowShouldShow;
+          keyArrow.classList.toggle('visible', arrowShouldShow);
+        }
+        const arrowShouldHide = scrollTop >= fadeStart;
+        if (arrowShouldHide !== state.arrowHidden) {
+          state.arrowHidden = arrowShouldHide;
+          keyArrow.classList.toggle('hidden', arrowShouldHide);
+        }
+
+        for (let i = 0; i < statementLines.length; i++) {
+          const el = statementLines[i];
+          const rect = el.getBoundingClientRect();
+          const inView = rect.top < vh * 0.8 && rect.bottom > vh * 0.1;
+          if (inView !== state.statementsVisible[i]) {
+            state.statementsVisible[i] = inView;
+            el.classList.toggle('visible', inView);
+          }
         }
 
         if (++effectTick % 2 === 0) {
