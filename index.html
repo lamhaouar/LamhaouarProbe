@@ -156,13 +156,13 @@
       width: 100%;
       max-width: 100%;
       text-align: center;
-      color: #555;
+      color: #666;
       font-family: 'Inter', system-ui, sans-serif;
-      font-size: 10px;
-      font-weight: 300;
-      letter-spacing: 0.16em;
+      font-size: 9px;
+      font-weight: 400;
+      letter-spacing: 0.2em;
       text-transform: uppercase;
-      line-height: 1.8;
+      line-height: 1.9;
       pointer-events: none;
       user-select: none;
       padding: 0 5vw;
@@ -175,18 +175,14 @@
 
     .static-text.top .title-line {
       display: block;
-      color: #fff;
-      font-weight: 400;
-      letter-spacing: 0.24em;
-      margin-bottom: 0.6em;
-    }
-    .static-text.top .desc-line {
-      display: block;
-      color: #555;
-      font-weight: 300;
+      color: #ddd;
+      font-weight: 500;
+      letter-spacing: 0.28em;
+      margin-bottom: 0.7em;
     }
 
-    /* minimal down-arrow indicator, fixed near the bottom, fades as you scroll */
+    .static-text.top .statement { display: block; }
+
     .scroll-cue {
       position: fixed;
       left: 50%;
@@ -199,15 +195,8 @@
       transition: opacity 0.35s ease, transform 0.35s ease;
       animation: cue-bob 2.2s ease-in-out infinite;
     }
-    .scroll-cue svg {
-      display: block;
-      width: 18px;
-      height: 18px;
-    }
-    .scroll-cue.hidden {
-      opacity: 0;
-      transform: translateX(-50%) translateY(6px);
-    }
+    .scroll-cue svg { display: block; width: 18px; height: 18px; }
+    .scroll-cue.hidden { opacity: 0; transform: translateX(-50%) translateY(6px); }
     @keyframes cue-bob {
       0%, 100% { transform: translateX(-50%) translateY(0); }
       50%      { transform: translateX(-50%) translateY(4px); }
@@ -230,65 +219,102 @@
       pointer-events: none;
     }
 
+    /* Citations panel: transparent, so the blurred image field stays
+       visible behind it. The list relies on a soft text-shadow and
+       a gentle top/bottom vignette rather than an opaque surface. */
     .citations {
       position: fixed;
       left: 0;
       right: 0;
-      bottom: 0;
       top: 0;
-      pointer-events: none;
-      z-index: 8;
+      bottom: 0;
+      z-index: 9;
       display: flex;
       align-items: flex-end;
       justify-content: center;
       padding-bottom: calc(6vh + env(safe-area-inset-bottom, 0px));
+      padding-top: calc(10vh + env(safe-area-inset-top, 0px));
       opacity: 0;
       transform: translateY(20px);
       transition: opacity 0.3s linear, transform 0.3s linear;
+      pointer-events: none;
     }
     .citations.visible {
       opacity: 1;
       transform: translateY(0);
-      pointer-events: auto;
+    }
+
+    /* A soft dark vignette only at the very bottom, so the list has
+       some ground to sit on without hiding the images. */
+    .citations::after {
+      content: '';
+      position: absolute;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      height: 40%;
+      pointer-events: none;
+      background: linear-gradient(
+        to bottom,
+        rgba(0,0,0,0) 0%,
+        rgba(0,0,0,0.55) 60%,
+        rgba(0,0,0,0.85) 100%
+      );
+      z-index: -1;
     }
 
     .citations-inner {
       width: 100%;
       max-width: 100%;
+      max-height: 100%;
       padding: 0 8vw;
       text-align: left;
-      color: #777;
+      color: #999;
       font-family: 'Inter', system-ui, sans-serif;
-      font-size: 9px;
+      font-size: 10px;
       font-weight: 300;
       letter-spacing: 0.16em;
       text-transform: uppercase;
       line-height: 2;
-      max-height: 38vh;
       overflow-y: auto;
+      overflow-x: hidden;
+      -webkit-overflow-scrolling: touch;
+      overscroll-behavior: contain;
+      touch-action: pan-y;
+      pointer-events: none;
+      /* light text-shadow lifts the type off the blurred images
+         without painting a panel over them */
+      text-shadow: 0 1px 2px rgba(0,0,0,0.9), 0 0 6px rgba(0,0,0,0.7);
+    }
+    .citations.visible .citations-inner {
+      pointer-events: auto;
     }
     .citations-inner::-webkit-scrollbar { display: none; }
     .citations-inner { scrollbar-width: none; }
 
+    .citations-inner .group { margin-bottom: 1.4em; }
+    .citations-inner .group-title {
+      display: block;
+      color: #ccc;
+      font-weight: 400;
+      letter-spacing: 0.2em;
+      padding-bottom: 0.4em;
+      margin-bottom: 0.4em;
+      border-bottom: 1px solid rgba(255,255,255,0.12);
+    }
     .citations-inner .cite {
       display: flex;
       gap: 0.8em;
       white-space: normal;
       padding: 0.35em 0;
-      border-bottom: 1px solid rgba(255,255,255,0.05);
     }
-    .citations-inner .cite .num {
-      color: #aaa;
-      flex: 0 0 auto;
-      min-width: 2.4em;
-    }
-    .citations-inner .cite .name {
-      color: #777;
-    }
+    .citations-inner .cite .num { color: #ccc; flex: 0 0 auto; min-width: 2.4em; }
+    .citations-inner .cite .name { color: #999; }
 
     @media (hover: none) and (pointer: coarse) {
       .annotation { font-size: 10px; letter-spacing: 0.28em; max-width: 45vw; }
-      .static-text { font-size: 11px; letter-spacing: 0.18em; }
+      .static-text { font-size: 10px; letter-spacing: 0.22em; }
+      .static-text.top .title-line { font-size: 11px; }
       .citations-inner { font-size: 10px; letter-spacing: 0.18em; }
     }
   </style>
@@ -307,7 +333,7 @@
 
     <div class="static-text top" id="staticTop">
       <span class="title-line">Second Skin</span>
-      <span class="desc-line">exploring textile waste as a form of intimate material reuse, where discarded fibers are reconstituted into a new protective outer layer.</span>
+      <span class="statement">Textiles act as a second skin, forming an intimate boundary between ourselves and the outside world while shaping our sense of protection, exposure, and identity.</span>
     </div>
     <div class="static-text bottom" id="staticBottom">85% of discarded textiles end up in landfills or are incinerated. 60%-67% are synthetic (polyester, nylon, and acrylic).</div>
   </div>
@@ -328,54 +354,39 @@
 
   <script>
     (function() {
-      // IMAGE FILES
       const topImages = [
-        'images/t01.png',
-        'images/t02.png',
-        'images/t03.png',
-        'images/t04.png',
-        'images/t05.png',
-        'images/t06.png',
-        'images/t07.png',
+        'images/t01.png','images/t02.png','images/t03.png','images/t04.png',
+        'images/t05.png','images/t06.png','images/t07.png'
       ];
-
       const bottomImages = [
-        'images/b01.png',
-        'images/b02.jpg',
-        'images/b03.jpg',
-        'images/b04.jpg',
-        'images/b05.jpg',
-        'images/b06.jpg',
-        'images/b07.jpg',
-        'images/b08.jpg',
-        'images/b09.jpg',
-        'images/b10.jpg'
+        'images/b01.png','images/b02.jpg','images/b03.jpg','images/b04.jpg','images/b05.jpg',
+        'images/b06.jpg','images/b07.jpg','images/b08.jpg','images/b09.jpg','images/b10.jpg'
       ];
 
       const topLabels = ['01','02','03','04','05','06','07'];
-      const bottomLabels = ['near COP28 Dubai','12','13','14','15','16','17','18','19','20'];
+      const bottomLabels = ['08','09','10','11','12','13','14','15','16','17'];
 
-      const citations = [
-        { num: '01', name: 'Inuit of Pangnirtung, Nunavut' },
-        { num: '02', name: 'Bedouin Tent, Morocco' },
-        { num: '03', name: 'Airmail Dress, UK' },
-        { num: '04', name: 'Wuthering Heights, 2026' },
-        { num: '05', name: 'Placeholder image 05' },
-        { num: '06', name: 'Placeholder image 06' },
-        { num: '07', name: 'Placeholder image 07' },
-        { num: '08', name: 'Placeholder image 08' },
+      const topCitations = [
+        { num: '01', name: 'Appelt, Dieter, Erste Hangung (fist hanging), From Monte Isola, 1976' },
+        { num: '02', name: 'Coplans, John, Self-Portrait (Back No. 16), 1992' },
+        { num: '03', name: 'Appelt, Dieter, Autoportrait, 1984' },
+        { num: '04', name: 'Mapplethorpe, Robert, Frank Diaz, 1980' },
+        { num: '05', name: 'Phipps, Chloe, Show Your Bones' },
+        { num: '06', name: 'Coplans, John, Self-Portrait (Torso, Front), 1994' },
+        { num: '07', name: 'Appelt, Dieter, Aus der Sequenz Ezra Pound, 1981-1981' },
+      ];
+
+      const bottomCitations = [
+        { num: '08', name: 'near COP28 Dubai' },
         { num: '09', name: 'Placeholder image 09' },
         { num: '10', name: 'Placeholder image 10' },
-        { num: '11', name: 'near COP28 Dubai' },
+        { num: '11', name: 'Placeholder image 11' },
         { num: '12', name: 'Placeholder image 12' },
         { num: '13', name: 'Placeholder image 13' },
         { num: '14', name: 'Placeholder image 14' },
         { num: '15', name: 'Placeholder image 15' },
         { num: '16', name: 'Placeholder image 16' },
         { num: '17', name: 'Placeholder image 17' },
-        { num: '18', name: 'Placeholder image 18' },
-        { num: '19', name: 'Placeholder image 19' },
-        { num: '20', name: 'Placeholder image 20' },
       ];
 
       const TOP_COUNT = topImages.length;
@@ -394,20 +405,34 @@
       const staticBottom = document.getElementById('staticBottom');
       const scrollCue = document.getElementById('scrollCue');
 
-      citationsInner.innerHTML = '';
-      citations.forEach(c => {
-        const row = document.createElement('div');
-        row.className = 'cite';
-        const n = document.createElement('span');
-        n.className = 'num';
-        n.textContent = c.num;
-        const nm = document.createElement('span');
-        nm.className = 'name';
-        nm.textContent = c.name;
-        row.appendChild(n);
-        row.appendChild(nm);
-        citationsInner.appendChild(row);
-      });
+      function buildCitations() {
+        citationsInner.innerHTML = '';
+        function makeGroup(title, items) {
+          const group = document.createElement('div');
+          group.className = 'group';
+          const h = document.createElement('span');
+          h.className = 'group-title';
+          h.textContent = title;
+          group.appendChild(h);
+          items.forEach(c => {
+            const row = document.createElement('div');
+            row.className = 'cite';
+            const n = document.createElement('span');
+            n.className = 'num';
+            n.textContent = c.num;
+            const nm = document.createElement('span');
+            nm.className = 'name';
+            nm.textContent = c.name;
+            row.appendChild(n);
+            row.appendChild(nm);
+            group.appendChild(row);
+          });
+          citationsInner.appendChild(group);
+        }
+        makeGroup('Top Row · 01–07', topCitations);
+        makeGroup('Bottom Row · 08–17', bottomCitations);
+      }
+      buildCitations();
 
       function buildRow(track, imageList, labels, variant) {
         track.innerHTML = '';
@@ -592,8 +617,8 @@
       }
 
       const SCROLL_DRIVE = 1.4;
-      const BLUR_RANGE = 260;      // px of scroll over which the app blurs to max
-      const MAX_APP_BLUR = 8;      // px of blur at full scroll
+      const BLUR_RANGE = 260;
+      const MAX_APP_BLUR = 8;
 
       function tick(now) {
         if (!now) now = performance.now();
@@ -632,7 +657,6 @@
           setTransform(trackBottom, 'lastBottomTransform', state.bottomOffset);
         }
 
-        // --- app blur + text fade tied to scroll position ---
         const t = Math.min(1, Math.max(0, scrollTop / BLUR_RANGE));
         const appBlur = t * MAX_APP_BLUR;
         if (Math.abs(state.appBlur - appBlur) > 0.05) {
@@ -646,7 +670,6 @@
           staticBottom.style.opacity = textOpacity;
         }
 
-        // --- citations reveal ---
         const revealAt = 40;
         if (scrollTop > revealAt) {
           citationsEl.classList.add('visible');
@@ -654,7 +677,6 @@
           citationsEl.classList.remove('visible');
         }
 
-        // --- scroll cue fades out once you start scrolling ---
         if (scrollTop > 12) {
           scrollCue.classList.add('hidden');
         } else {
@@ -669,11 +691,29 @@
         requestAnimationFrame(tick);
       }
 
-      // --- horizontal drag support ---
-      let pointerDownX = 0, pointerDownY = 0, pointerId = null, dragStarted = false;
+      let pointerDownY = 0;
+      citationsInner.addEventListener('touchstart', (e) => {
+        pointerDownY = e.touches[0].clientY;
+      }, { passive: true });
+
+      citationsInner.addEventListener('touchmove', (e) => {
+        const dy = e.touches[0].clientY - pointerDownY;
+        if (citationsInner.scrollTop <= 0 && dy > 0) {
+          scrollLayer.scrollTop = Math.max(0, scrollLayer.scrollTop - dy * 0.6);
+        }
+        pointerDownY = e.touches[0].clientY;
+      }, { passive: true });
+
+      citationsInner.addEventListener('wheel', (e) => {
+        if (citationsInner.scrollTop <= 0 && e.deltaY < 0) {
+          scrollLayer.scrollTop = Math.max(0, scrollLayer.scrollTop + e.deltaY);
+        }
+      }, { passive: true });
+
+      let pointerDownX = 0, pointerId = null, dragStarted = false;
 
       document.addEventListener('pointerdown', (e) => {
-        if (e.target.closest('.citations')) return;
+        if (e.target.closest('.citations-inner')) return;
         pointerDownX = e.clientX;
         pointerDownY = e.clientY;
         pointerId = e.pointerId;
