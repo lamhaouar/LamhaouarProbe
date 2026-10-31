@@ -173,7 +173,6 @@
     .static-text.top { top: calc(4vh + env(safe-area-inset-top, 0px)); }
     .static-text.bottom { bottom: calc(4vh + env(safe-area-inset-bottom, 0px)); }
 
-    /* author + advisor on one centered line; advisor clearly dimmer */
     .static-text.top .names-line {
       display: block;
       margin-bottom: 0.8em;
@@ -331,15 +330,15 @@
     (function() {
       const topImages = [
         'images/t01.png','images/t02.png','images/t03.png','images/t04.png',
-        'images/t05.png','images/t06.png','images/t07.png'
+        'images/t05.png','images/t06.png','images/t07.png','images/t08.png','images/t09.png'
       ];
       const bottomImages = [
         'images/b01.png','images/b02.jpg','images/b03.jpg','images/b04.jpg','images/b05.jpg',
         'images/b06.jpg','images/b07.jpg','images/b08.jpg','images/b09.jpg','images/b10.jpg'
       ];
 
-      const topLabels = ['01','02','03','04','05','06','07'];
-      const bottomLabels = ['08','09','10','11','12','13','14','15','16','17'];
+      const topLabels = ['01','02','03','04','05','06','07','08','09'];
+      const bottomLabels = ['10','11','12','13','14','15','16','17','18','19'];
 
       const topCitations = [
         { num: '01', name: 'Appelt, Dieter, Erste Hangung (fist hanging), From Monte Isola, 1976' },
@@ -349,12 +348,12 @@
         { num: '05', name: 'Phipps, Chloe, Show Your Bones' },
         { num: '06', name: 'Coplans, John, Self-Portrait (Torso, Front), 1994' },
         { num: '07', name: 'Appelt, Dieter, Aus der Sequenz Ezra Pound, 1981-1981' },
+        { num: '08', name: 'Aiken, Stephen, Joseph Beuys during I Like America and America Likes Me, René Block Gallery, New York, 1974.' },
+        { num: '09', name: 'Woodman, Francesca, Untitled, Providence, Rhode Island, 1975–78' }
       ];
 
       const bottomCitations = [
-        { num: '08', name: 'near COP28 Dubai' },
-        { num: '09', name: 'Placeholder image 09' },
-        { num: '10', name: 'Placeholder image 10' },
+        { num: '10', name: 'near COP28 Dubai' },
         { num: '11', name: 'Placeholder image 11' },
         { num: '12', name: 'Placeholder image 12' },
         { num: '13', name: 'Placeholder image 13' },
@@ -362,6 +361,8 @@
         { num: '15', name: 'Placeholder image 15' },
         { num: '16', name: 'Placeholder image 16' },
         { num: '17', name: 'Placeholder image 17' },
+        { num: '18', name: 'Placeholder image 18' },
+        { num: '19', name: 'Placeholder image 19' },
       ];
 
       const TOP_COUNT = topImages.length;
@@ -403,8 +404,8 @@
           });
           citationsEl.appendChild(group);
         }
-        makeGroup('Top Row · 01–07', topCitations);
-        makeGroup('Bottom Row · 08–17', bottomCitations);
+        makeGroup('Top Row · 01–09', topCitations);
+        makeGroup('Bottom Row · 10–19', bottomCitations);
       }
       buildCitations();
 
