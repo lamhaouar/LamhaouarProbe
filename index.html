@@ -22,6 +22,17 @@
       -webkit-tap-highlight-color: transparent;
     }
 
+    .app {
+      position: relative;
+      height: 100dvh;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      transition: filter 0.25s ease;
+      will-change: filter;
+    }
+
     .gallery {
       display: flex;
       flex-direction: column;
@@ -34,6 +45,7 @@
       perspective: 1200px;
       perspective-origin: 50% 50%;
       transform-style: preserve-3d;
+      pointer-events: none;
     }
 
     .row {
@@ -116,13 +128,20 @@
       display: flex;
       align-items: center;
       justify-content: center;
+      text-align: center;
       color: #fff;
       font-family: 'Inter', system-ui, sans-serif;
       font-size: 9px;
       font-weight: 400;
       letter-spacing: 0.24em;
       text-transform: uppercase;
-      white-space: nowrap;
+      white-space: normal;
+      overflow-wrap: break-word;
+      word-break: break-word;
+      line-height: 1.4;
+      max-width: 19.2vh;
+      padding: 0 2px;
+      box-sizing: border-box;
       pointer-events: none;
       opacity: 0;
       filter: blur(4px);
@@ -147,51 +166,181 @@
       pointer-events: none;
       user-select: none;
       padding: 0 5vw;
+      z-index: 5;
+      transition: opacity 0.25s ease;
     }
 
     .static-text.top { top: calc(4vh + env(safe-area-inset-top, 0px)); }
     .static-text.bottom { bottom: calc(4vh + env(safe-area-inset-bottom, 0px)); }
 
+    .static-text.top .title-line {
+      display: block;
+      color: #fff;
+      font-weight: 400;
+      letter-spacing: 0.24em;
+      margin-bottom: 0.6em;
+    }
+    .static-text.top .desc-line {
+      display: block;
+      color: #555;
+      font-weight: 300;
+    }
+
+    /* minimal down-arrow indicator, fixed near the bottom, fades as you scroll */
+    .scroll-cue {
+      position: fixed;
+      left: 50%;
+      bottom: calc(2vh + env(safe-area-inset-bottom, 0px));
+      transform: translateX(-50%);
+      z-index: 20;
+      pointer-events: none;
+      color: #aaa;
+      opacity: 0.7;
+      transition: opacity 0.35s ease, transform 0.35s ease;
+      animation: cue-bob 2.2s ease-in-out infinite;
+    }
+    .scroll-cue svg {
+      display: block;
+      width: 18px;
+      height: 18px;
+    }
+    .scroll-cue.hidden {
+      opacity: 0;
+      transform: translateX(-50%) translateY(6px);
+    }
+    @keyframes cue-bob {
+      0%, 100% { transform: translateX(-50%) translateY(0); }
+      50%      { transform: translateX(-50%) translateY(4px); }
+    }
+
+    .scroll-layer {
+      position: fixed;
+      inset: 0;
+      overflow-y: auto;
+      overflow-x: hidden;
+      -webkit-overflow-scrolling: touch;
+      z-index: 10;
+    }
+    .scroll-layer::-webkit-scrollbar { display: none; }
+    .scroll-layer { scrollbar-width: none; }
+
+    .scroll-spacer {
+      width: 100%;
+      height: 220dvh;
+      pointer-events: none;
+    }
+
+    .citations {
+      position: fixed;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      top: 0;
+      pointer-events: none;
+      z-index: 8;
+      display: flex;
+      align-items: flex-end;
+      justify-content: center;
+      padding-bottom: calc(6vh + env(safe-area-inset-bottom, 0px));
+      opacity: 0;
+      transform: translateY(20px);
+      transition: opacity 0.3s linear, transform 0.3s linear;
+    }
+    .citations.visible {
+      opacity: 1;
+      transform: translateY(0);
+      pointer-events: auto;
+    }
+
+    .citations-inner {
+      width: 100%;
+      max-width: 100%;
+      padding: 0 8vw;
+      text-align: left;
+      color: #777;
+      font-family: 'Inter', system-ui, sans-serif;
+      font-size: 9px;
+      font-weight: 300;
+      letter-spacing: 0.16em;
+      text-transform: uppercase;
+      line-height: 2;
+      max-height: 38vh;
+      overflow-y: auto;
+    }
+    .citations-inner::-webkit-scrollbar { display: none; }
+    .citations-inner { scrollbar-width: none; }
+
+    .citations-inner .cite {
+      display: flex;
+      gap: 0.8em;
+      white-space: normal;
+      padding: 0.35em 0;
+      border-bottom: 1px solid rgba(255,255,255,0.05);
+    }
+    .citations-inner .cite .num {
+      color: #aaa;
+      flex: 0 0 auto;
+      min-width: 2.4em;
+    }
+    .citations-inner .cite .name {
+      color: #777;
+    }
+
     @media (hover: none) and (pointer: coarse) {
-      .annotation { font-size: 10px; letter-spacing: 0.28em; }
+      .annotation { font-size: 10px; letter-spacing: 0.28em; max-width: 45vw; }
       .static-text { font-size: 11px; letter-spacing: 0.18em; }
+      .citations-inner { font-size: 10px; letter-spacing: 0.18em; }
     }
   </style>
 </head>
 <body>
-  <div class="gallery">
-    <div class="row row-top" id="rowTop">
-      <div class="row-track" id="trackTop"></div>
+
+  <div class="app" id="app">
+    <div class="gallery">
+      <div class="row row-top" id="rowTop">
+        <div class="row-track" id="trackTop"></div>
+      </div>
+      <div class="row row-bottom" id="rowBottom">
+        <div class="row-track" id="trackBottom"></div>
+      </div>
     </div>
-    <div class="row row-bottom" id="rowBottom">
-      <div class="row-track" id="trackBottom"></div>
+
+    <div class="static-text top" id="staticTop">
+      <span class="title-line">Second Skin</span>
+      <span class="desc-line">exploring textile waste as a form of intimate material reuse, where discarded fibers are reconstituted into a new protective outer layer.</span>
     </div>
+    <div class="static-text bottom" id="staticBottom">85% of discarded textiles end up in landfills or are incinerated. 60%-67% are synthetic (polyester, nylon, and acrylic).</div>
   </div>
 
-  <div class="static-text top">Second Skin</div>
-  <div class="static-text bottom">85% of discarded textiles end up in landfills or are incinerated. 60%-67% are synthetic (polyester, nylon, and acrylic).
-  
+  <div class="citations" id="citations">
+    <div class="citations-inner" id="citationsInner"></div>
+  </div>
+
+  <div class="scroll-cue" id="scrollCue" aria-hidden="true">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M6 9l6 6 6-6" />
+    </svg>
+  </div>
+
+  <div class="scroll-layer" id="scrollLayer">
+    <div class="scroll-spacer"></div>
   </div>
 
   <script>
     (function() {
       // IMAGE FILES
-      // Upload these files to an "images" folder beside this HTML file in your GitHub repository.
       const topImages = [
-        'images/t01.jpg',
-        'images/t02.jpg',
-        'images/t03.jpg',
-        'images/t04.jpg',
-        'images/t05.jpg',
-        'images/t06.jpg',
-        'images/t07.jpg',
-        'images/t08.jpg',
-        'images/t09.jpg',
-        'images/t10.jpg'
+        'images/t01.png',
+        'images/t02.png',
+        'images/t03.png',
+        'images/t04.png',
+        'images/t05.png',
+        'images/t06.png',
+        'images/t07.png',
       ];
 
       const bottomImages = [
-        'images/b01.jpg',
+        'images/b01.png',
         'images/b02.jpg',
         'images/b03.jpg',
         'images/b04.jpg',
@@ -203,43 +352,62 @@
         'images/b10.jpg'
       ];
 
-      // IMAGE DESCRIPTIONS
-      // Replace the text in each pair of quotes with the caption for that image.
-      // Keep the order aligned with the image lists above.
-      const topLabels = [
-        '01',
-        '02',
-        '03',
-        '04',
-        '05',
-        '06',
-        '07',
-        '08',
-        '09',
-        '10'
+      const topLabels = ['01','02','03','04','05','06','07'];
+      const bottomLabels = ['near COP28 Dubai','12','13','14','15','16','17','18','19','20'];
+
+      const citations = [
+        { num: '01', name: 'Inuit of Pangnirtung, Nunavut' },
+        { num: '02', name: 'Bedouin Tent, Morocco' },
+        { num: '03', name: 'Airmail Dress, UK' },
+        { num: '04', name: 'Wuthering Heights, 2026' },
+        { num: '05', name: 'Placeholder image 05' },
+        { num: '06', name: 'Placeholder image 06' },
+        { num: '07', name: 'Placeholder image 07' },
+        { num: '08', name: 'Placeholder image 08' },
+        { num: '09', name: 'Placeholder image 09' },
+        { num: '10', name: 'Placeholder image 10' },
+        { num: '11', name: 'near COP28 Dubai' },
+        { num: '12', name: 'Placeholder image 12' },
+        { num: '13', name: 'Placeholder image 13' },
+        { num: '14', name: 'Placeholder image 14' },
+        { num: '15', name: 'Placeholder image 15' },
+        { num: '16', name: 'Placeholder image 16' },
+        { num: '17', name: 'Placeholder image 17' },
+        { num: '18', name: 'Placeholder image 18' },
+        { num: '19', name: 'Placeholder image 19' },
+        { num: '20', name: 'Placeholder image 20' },
       ];
 
-      const bottomLabels = [
-        '11',
-        '12',
-        '13',
-        '14',
-        '15',
-        '16',
-        '17',
-        '18',
-        '19',
-        '20'
-      ];
+      const TOP_COUNT = topImages.length;
+      const BOTTOM_COUNT = bottomImages.length;
 
-      const COUNT = 10;
       const baseSpeed = 0.7;
       const friction = 0.94;
 
       const trackTop = document.getElementById('trackTop');
       const trackBottom = document.getElementById('trackBottom');
-      const rowTop = document.getElementById('rowTop');
-      const rowBottom = document.getElementById('rowBottom');
+      const scrollLayer = document.getElementById('scrollLayer');
+      const citationsEl = document.getElementById('citations');
+      const citationsInner = document.getElementById('citationsInner');
+      const appEl = document.getElementById('app');
+      const staticTop = document.getElementById('staticTop');
+      const staticBottom = document.getElementById('staticBottom');
+      const scrollCue = document.getElementById('scrollCue');
+
+      citationsInner.innerHTML = '';
+      citations.forEach(c => {
+        const row = document.createElement('div');
+        row.className = 'cite';
+        const n = document.createElement('span');
+        n.className = 'num';
+        n.textContent = c.num;
+        const nm = document.createElement('span');
+        nm.className = 'name';
+        nm.textContent = c.name;
+        row.appendChild(n);
+        row.appendChild(nm);
+        citationsInner.appendChild(row);
+      });
 
       function buildRow(track, imageList, labels, variant) {
         track.innerHTML = '';
@@ -257,7 +425,7 @@
             wrap.appendChild(img);
             const ann = document.createElement('span');
             ann.className = 'annotation';
-            ann.textContent = labels[i];
+            ann.textContent = labels[i] || '';
             if (variant === 'top') {
               cell.appendChild(ann);
               cell.appendChild(wrap);
@@ -272,7 +440,8 @@
       buildRow(trackTop, topImages, topLabels, 'top');
       buildRow(trackBottom, bottomImages, bottomLabels, 'bottom');
 
-      let imgWidth = 0, singleWidthTop = 0, singleWidthBottom = 0;
+      let imgWidth = 0;
+      let singleWidthTop = 0, singleWidthBottom = 0;
       let measureQueued = false;
 
       function measureSoon() {
@@ -286,24 +455,37 @@
 
       function measure() {
         const kidsTop = trackTop.children;
-        if (kidsTop.length === 0) return;
-        let topSum = 0;
-        for (let i = 0; i < COUNT; i++) {
-          topSum += kidsTop[i].getBoundingClientRect().width;
+        if (kidsTop.length >= TOP_COUNT) {
+          let topSum = 0;
+          for (let i = 0; i < TOP_COUNT; i++) {
+            const cell = kidsTop[i];
+            if (!cell) continue;
+            topSum += cell.getBoundingClientRect().width;
+          }
+          if (topSum > 0) {
+            singleWidthTop = topSum;
+            imgWidth = kidsTop[0].getBoundingClientRect().width;
+          }
         }
-        imgWidth = kidsTop[0].getBoundingClientRect().width;
-        if (imgWidth <= 0) return;
-        singleWidthTop = topSum;
 
         const kidsBottom = trackBottom.children;
-        let botSum = 0;
-        for (let i = 0; i < COUNT; i++) {
-          botSum += kidsBottom[i].getBoundingClientRect().width;
+        if (kidsBottom.length >= BOTTOM_COUNT) {
+          let botSum = 0;
+          for (let i = 0; i < BOTTOM_COUNT; i++) {
+            const cell = kidsBottom[i];
+            if (!cell) continue;
+            botSum += cell.getBoundingClientRect().width;
+          }
+          if (botSum > 0) {
+            singleWidthBottom = botSum;
+            if (imgWidth <= 0 && kidsBottom[0]) {
+              imgWidth = kidsBottom[0].getBoundingClientRect().width;
+            }
+          }
         }
-        singleWidthBottom = botSum;
 
-        top.offset = normalizeNeg(top.offset, singleWidthTop);
-        bottom.offset = normalizeNeg(bottom.offset, singleWidthBottom);
+        if (singleWidthTop > 0) state.topOffset = normalizeNeg(state.topOffset, singleWidthTop);
+        if (singleWidthBottom > 0) state.bottomOffset = normalizeNeg(state.bottomOffset, singleWidthBottom);
       }
 
       function normalizeNeg(offset, w) {
@@ -314,8 +496,28 @@
         return o;
       }
 
-      const top = { offset: 0, velocity: 0, dragging: false, moved: false, lastX: 0, lastMoveTime: 0, downX: 0, downY: 0, downTime: 0, paused: false, lastTransform: null };
-      const bottom = { offset: 0, velocity: 0, dragging: false, moved: false, lastX: 0, lastMoveTime: 0, downX: 0, downY: 0, downTime: 0, paused: false, lastTransform: null };
+      const state = {
+        topOffset: 0,
+        bottomOffset: 0,
+        scrollTopSmoothed: 0,
+        lastScrollTop: 0,
+        lastTopTransform: null,
+        lastBottomTransform: null,
+        appBlur: 0,
+        textOpacity: 1,
+      };
+
+      const drag = {
+        active: false,
+        moved: false,
+        lastX: 0,
+        lastMoveTime: 0,
+        downX: 0,
+        downY: 0,
+        downTime: 0,
+        topVelocity: 0,
+        bottomVelocity: 0,
+      };
 
       window.addEventListener('load', () => {
         measure();
@@ -341,7 +543,8 @@
         let cursor = 0;
         for (let i = 0; i < kids.length; i++) {
           const cell = kids[i];
-          const w = cell.getBoundingClientRect().width;
+          const rect = cell.getBoundingClientRect();
+          const w = rect.width;
           const img = cell.querySelector('img');
           const wrap = cell.querySelector('.img-wrap');
           const ann = cell.querySelector('.annotation');
@@ -354,23 +557,20 @@
             t = Math.min(1, (dist - startBlur) / (influence - startBlur));
           }
 
-          // blur only — color stays
           const blur = t * maxBlur;
           const val = `blur(${blur.toFixed(1)}px)`;
           const prevFilter = filterState.get(img);
           if (prevFilter !== val) { img.style.filter = val; filterState.set(img, val); }
 
-          // GENTLER perspective bend
-          const rotY = side * t * 14;         // up to 14° at the far edge
-          const rotX = (isTop ? 1 : -1) * t * 3; // up to 3° vertical tilt
-          const scale = 1 - t * 0.06;         // shrink to 94% into the distance
-          const translateZ = -t * 30;         // push back slightly
+          const rotY = side * t * 14;
+          const rotX = (isTop ? 1 : -1) * t * 3;
+          const scale = 1 - t * 0.06;
+          const translateZ = -t * 30;
 
           const transformStr = `perspective(1100px) rotateY(${rotY.toFixed(2)}deg) rotateX(${rotX.toFixed(2)}deg) translateZ(${translateZ.toFixed(1)}px) scale(${scale.toFixed(3)})`;
           const prevT = transformState.get(wrap);
           if (prevT !== transformStr) { wrap.style.transform = transformStr; transformState.set(wrap, transformStr); }
 
-          // label fade
           let annOpacity = 0, annBlur = 4;
           if (dist < annStart) {
             const ta = Math.min(1, Math.max(0, (annStart - dist) / (annStart - annFull)));
@@ -386,10 +586,14 @@
 
       let lastTime = performance.now(), effectTick = 0;
 
-      function setTransform(track, state, offset) {
+      function setTransform(track, lastKey, offset) {
         const t = `translate3d(${offset}px, 0, 0)`;
-        if (state.lastTransform !== t) { track.style.transform = t; state.lastTransform = t; }
+        if (state[lastKey] !== t) { track.style.transform = t; state[lastKey] = t; }
       }
+
+      const SCROLL_DRIVE = 1.4;
+      const BLUR_RANGE = 260;      // px of scroll over which the app blurs to max
+      const MAX_APP_BLUR = 8;      // px of blur at full scroll
 
       function tick(now) {
         if (!now) now = performance.now();
@@ -397,69 +601,129 @@
         lastTime = now;
         const fs = dt / 16.6667;
 
-        if (singleWidthTop > 0) {
-          if (!top.dragging && !top.paused) {
-            top.offset -= (baseSpeed + top.velocity) * fs;
-            top.velocity *= Math.pow(friction, fs);
-            if (Math.abs(top.velocity) < 0.01) top.velocity = 0;
+        const scrollTop = scrollLayer.scrollTop;
+        const scrollDelta = scrollTop - state.lastScrollTop;
+        state.lastScrollTop = scrollTop;
+
+        state.scrollTopSmoothed += scrollDelta * 0.35;
+
+        if (singleWidthTop > 0 && singleWidthBottom > 0) {
+          state.topOffset -= baseSpeed * fs;
+          state.bottomOffset += baseSpeed * fs;
+
+          const drive = state.scrollTopSmoothed * SCROLL_DRIVE;
+          state.topOffset -= drive;
+          state.bottomOffset += drive;
+          state.scrollTopSmoothed *= Math.pow(0.85, fs);
+          if (Math.abs(state.scrollTopSmoothed) < 0.01) state.scrollTopSmoothed = 0;
+
+          if (!drag.active) {
+            state.topOffset -= drag.topVelocity * fs;
+            state.bottomOffset += drag.bottomVelocity * fs;
+            drag.topVelocity *= Math.pow(friction, fs);
+            drag.bottomVelocity *= Math.pow(friction, fs);
+            if (Math.abs(drag.topVelocity) < 0.01) drag.topVelocity = 0;
+            if (Math.abs(drag.bottomVelocity) < 0.01) drag.bottomVelocity = 0;
           }
-          top.offset = normalizeNeg(top.offset, singleWidthTop);
-          setTransform(trackTop, top, top.offset);
+
+          state.topOffset = normalizeNeg(state.topOffset, singleWidthTop);
+          state.bottomOffset = normalizeNeg(state.bottomOffset, singleWidthBottom);
+          setTransform(trackTop, 'lastTopTransform', state.topOffset);
+          setTransform(trackBottom, 'lastBottomTransform', state.bottomOffset);
         }
 
-        if (singleWidthBottom > 0) {
-          if (!bottom.dragging && !bottom.paused) {
-            bottom.offset += (baseSpeed + bottom.velocity) * fs;
-            bottom.velocity *= Math.pow(friction, fs);
-            if (Math.abs(bottom.velocity) < 0.01) bottom.velocity = 0;
-          }
-          bottom.offset = normalizeNeg(bottom.offset, singleWidthBottom);
-          setTransform(trackBottom, bottom, bottom.offset);
+        // --- app blur + text fade tied to scroll position ---
+        const t = Math.min(1, Math.max(0, scrollTop / BLUR_RANGE));
+        const appBlur = t * MAX_APP_BLUR;
+        if (Math.abs(state.appBlur - appBlur) > 0.05) {
+          state.appBlur = appBlur;
+          appEl.style.filter = `blur(${appBlur.toFixed(1)}px)`;
+        }
+        const textOpacity = (1 - t).toFixed(2);
+        if (state.textOpacity !== textOpacity) {
+          state.textOpacity = textOpacity;
+          staticTop.style.opacity = textOpacity;
+          staticBottom.style.opacity = textOpacity;
+        }
+
+        // --- citations reveal ---
+        const revealAt = 40;
+        if (scrollTop > revealAt) {
+          citationsEl.classList.add('visible');
+        } else {
+          citationsEl.classList.remove('visible');
+        }
+
+        // --- scroll cue fades out once you start scrolling ---
+        if (scrollTop > 12) {
+          scrollCue.classList.add('hidden');
+        } else {
+          scrollCue.classList.remove('hidden');
         }
 
         if (++effectTick % 2 === 0) {
           const vw = window.innerWidth;
-          if (singleWidthTop > 0) {
-            applyEffects(trackTop, top.offset, vw, true);
-            applyEffects(trackBottom, bottom.offset, vw, false);
-          }
+          if (singleWidthTop > 0) applyEffects(trackTop, state.topOffset, vw, true);
+          if (singleWidthBottom > 0) applyEffects(trackBottom, state.bottomOffset, vw, false);
         }
         requestAnimationFrame(tick);
       }
 
-      function attachRowHandlers(rowEl, state, isBottom) {
-        rowEl.addEventListener('pointerdown', (e) => {
-          state.dragging = true; state.moved = false;
-          state.downX = e.clientX; state.downY = e.clientY;
-          state.downTime = performance.now();
-          state.lastX = e.clientX; state.lastMoveTime = performance.now();
-          state.velocity = 0;
-        });
-        rowEl.addEventListener('pointermove', (e) => {
-          if (!state.dragging) return;
-          const dx = e.clientX - state.lastX;
-          const now = performance.now(); const dt = Math.max(1, now - state.lastMoveTime);
-          if (Math.abs(e.clientX - state.downX) > 8 || Math.abs(e.clientY - state.downY) > 8) state.moved = true;
-          if (state.moved) {
-            state.paused = false;
-            state.offset += dx;
-            state.velocity = (isBottom ? 1 : -1) * (dx / dt * 16);
-            state.lastX = e.clientX; state.lastMoveTime = now;
-          }
-        });
-        rowEl.addEventListener('pointerup', (e) => {
-          const dt = performance.now() - state.downTime;
-          const quick = dt < 400;
-          const still = Math.abs(e.clientX - state.downX) < 8 && Math.abs(e.clientY - state.downY) < 8;
-          state.dragging = false;
-          if (quick && still) { state.paused = !state.paused; state.velocity = 0; }
-          else if (state.moved) state.paused = false;
-        });
-        rowEl.addEventListener('pointercancel', () => { state.dragging = false; });
-      }
+      // --- horizontal drag support ---
+      let pointerDownX = 0, pointerDownY = 0, pointerId = null, dragStarted = false;
 
-      attachRowHandlers(rowTop, top, false);
-      attachRowHandlers(rowBottom, bottom, true);
+      document.addEventListener('pointerdown', (e) => {
+        if (e.target.closest('.citations')) return;
+        pointerDownX = e.clientX;
+        pointerDownY = e.clientY;
+        pointerId = e.pointerId;
+        dragStarted = false;
+        drag.active = true;
+        drag.moved = false;
+        drag.lastX = e.clientX;
+        drag.lastMoveTime = performance.now();
+        drag.topVelocity = 0;
+        drag.bottomVelocity = 0;
+      });
+
+      document.addEventListener('pointermove', (e) => {
+        if (!drag.active || e.pointerId !== pointerId) return;
+        const dx = e.clientX - drag.lastX;
+        const now = performance.now(); const dt = Math.max(1, now - drag.lastMoveTime);
+        const totalDx = Math.abs(e.clientX - pointerDownX);
+        const totalDy = Math.abs(e.clientY - pointerDownY);
+        if (!dragStarted) {
+          if (totalDx > 8 && totalDx > totalDy) {
+            dragStarted = true;
+            drag.moved = true;
+            scrollLayer.style.pointerEvents = 'none';
+          } else if (totalDy > 8) {
+            drag.active = false;
+            return;
+          }
+        }
+        if (dragStarted) {
+          drag.lastX = e.clientX;
+          drag.lastMoveTime = now;
+          const v = (dx / dt) * 16;
+          drag.topVelocity = v;
+          drag.bottomVelocity = v;
+          state.topOffset -= dx;
+          state.bottomOffset += dx;
+        }
+      });
+
+      function endDrag(e) {
+        if (!drag.active || e.pointerId !== pointerId) return;
+        drag.active = false;
+        if (dragStarted) {
+          scrollLayer.style.pointerEvents = '';
+          dragStarted = false;
+        }
+      }
+      document.addEventListener('pointerup', endDrag);
+      document.addEventListener('pointercancel', endDrag);
+
       document.addEventListener('contextmenu', e => e.preventDefault());
       document.addEventListener('dragstart', e => e.preventDefault());
 
