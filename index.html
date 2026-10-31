@@ -199,7 +199,7 @@
       left: 50%;
       bottom: calc(2vh + env(safe-area-inset-bottom, 0px));
       transform: translateX(-50%);
-      z-index: 20;
+      z-index: 40;
       pointer-events: none;
       color: #aaa;
       opacity: 0.7;
@@ -284,11 +284,84 @@
     .citations .cite .num { color: #ccc; flex: 0 0 auto; min-width: 2.4em; }
     .citations .cite .name { color: #999; }
 
+    /* --- peek: tide-like, in front, title + one source --- */
+    .peek {
+      position: fixed;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      height: 16vh;
+      z-index: 30;
+      pointer-events: none;
+      overflow: hidden;
+      opacity: 0;
+      transform: translateY(100%);
+      filter: blur(0.6px);
+      background: linear-gradient(
+        to top,
+        rgba(0,0,0,0.94) 0%,
+        rgba(0,0,0,0.88) 50%,
+        rgba(0,0,0,0) 100%
+      );
+      -webkit-mask-image: linear-gradient(
+        to bottom,
+        rgba(0,0,0,0) 0%,
+        rgba(0,0,0,1) 65%,
+        rgba(0,0,0,1) 100%
+      );
+      mask-image: linear-gradient(
+        to bottom,
+        rgba(0,0,0,0) 0%,
+        rgba(0,0,0,1) 65%,
+        rgba(0,0,0,1) 100%
+      );
+    }
+    .peek-inner {
+      position: absolute;
+      left: 0;
+      right: 0;
+      top: 0;
+      padding: 0 8vw;
+      color: #ccc;
+      font-family: 'Inter', system-ui, sans-serif;
+      font-size: 10px;
+      font-weight: 300;
+      letter-spacing: 0.16em;
+      text-transform: uppercase;
+      line-height: 2;
+      text-align: left;
+      text-shadow: 0 1px 2px rgba(0,0,0,0.9), 0 0 6px rgba(0,0,0,0.7);
+    }
+    .peek-inner .peek-title {
+      display: block;
+      color: #ddd;
+      font-weight: 400;
+      letter-spacing: 0.2em;
+      padding-bottom: 0.35em;
+      margin-bottom: 0.35em;
+      border-bottom: 1px solid rgba(255,255,255,0.14);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      opacity: 0.95;
+    }
+    .peek-inner .peek-line {
+      display: flex;
+      gap: 0.8em;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      opacity: 0.85;
+    }
+    .peek-inner .peek-line .num { color: #ccc; flex: 0 0 auto; min-width: 2.4em; }
+    .peek-inner .peek-line .name { color: #aaa; overflow: hidden; text-overflow: ellipsis; }
+
     @media (hover: none) and (pointer: coarse) {
       .annotation { font-size: 10px; letter-spacing: 0.28em; max-width: 45vw; }
       .static-text { font-size: 10px; letter-spacing: 0.22em; }
       .static-text.top .names-line { font-size: 10px; }
       .citations { font-size: 10px; letter-spacing: 0.18em; }
+      .peek-inner { font-size: 10px; letter-spacing: 0.18em; }
     }
   </style>
 </head>
@@ -319,6 +392,10 @@
     </svg>
   </div>
 
+  <div class="peek" id="peek" aria-hidden="true">
+    <div class="peek-inner" id="peekInner"></div>
+  </div>
+
   <div class="scroll-layer" id="scrollLayer">
     <div class="scroll-content">
       <div class="scroll-top-spacer"></div>
@@ -333,7 +410,7 @@
         'images/t05.png','images/t06.png','images/t07.png','images/t08.png','images/t09.png'
       ];
       const bottomImages = [
-        'images/b01.png','images/b02.jpg','images/b03.jpg','images/b04.jpg','images/b05.jpg',
+        'images/b01.png','images/b02.jpeg','images/b03.png','images/b04.jpeg','images/b05.jpeg',
         'images/b06.jpg','images/b07.jpg','images/b08.jpg','images/b09.jpg','images/b10.jpg'
       ];
 
@@ -379,6 +456,97 @@
       const staticTop = document.getElementById('staticTop');
       const staticBottom = document.getElementById('staticBottom');
       const scrollCue = document.getElementById('scrollCue');
+      const peekEl = document.getElementById('peek');
+      const peekInner = document.getElementById('peekInner');
+
+      // --- scroll hint peek: tide-like, in front, title + one source ---
+      let nudgePlayed = false;
+      let userInteracted = false;
+      let nudgeActive = false;
+
+      function hidePeek() {
+        peekEl.style.transition = 'opacity 0.8s ease, transform 1.6s cubic-bezier(0.55, 0, 0.55, 0.2)';
+        peekEl.style.opacity = '0';
+        peekEl.style.transform = 'translateY(100%)';
+      }
+
+      function setBottomTextDim(dim) {
+        if (staticBottom) {
+          staticBottom.style.opacity = dim ? '0.25' : '1';
+        }
+      }
+
+      function markInteracted() {
+        if (userInteracted) return;
+        userInteracted = true;
+        hidePeek();
+        if (nudgeActive) {
+          nudgeActive = false;
+          setBottomTextDim(false);
+        }
+      }
+
+      ['wheel', 'touchstart', 'pointerdown', 'keydown'].forEach(evt => {
+        window.addEventListener(evt, markInteracted, { passive: true });
+      });
+
+      scrollLayer.addEventListener('scroll', () => {
+        if (scrollLayer.scrollTop > 4) markInteracted();
+      }, { passive: true });
+
+      function buildPeekContent() {
+        peekInner.innerHTML = '';
+        const title = document.createElement('span');
+        title.className = 'peek-title';
+        title.textContent = 'Top Row · 01–09';
+        peekInner.appendChild(title);
+
+        const first = topCitations[0];
+        const line = document.createElement('div');
+        line.className = 'peek-line';
+        const n = document.createElement('span');
+        n.className = 'num';
+        n.textContent = first.num;
+        const nm = document.createElement('span');
+        nm.className = 'name';
+        nm.textContent = first.name;
+        line.appendChild(n);
+        line.appendChild(nm);
+        peekInner.appendChild(line);
+      }
+      buildPeekContent();
+
+      function sleep(ms) {
+        return new Promise(res => setTimeout(res, ms));
+      }
+
+      async function runNudge() {
+        if (nudgePlayed || userInteracted) return;
+        nudgePlayed = true;
+        nudgeActive = true;
+
+        peekEl.style.transition = 'opacity 2s ease, transform 3.8s cubic-bezier(0.33, 1, 0.68, 1)';
+        peekEl.style.opacity = '0.98';
+        peekEl.style.transform = 'translateY(0%)';
+        setBottomTextDim(true);
+
+        await sleep(3800);
+        if (userInteracted) return;
+
+        await sleep(2600);
+        if (userInteracted) return;
+
+        hidePeek();
+        setBottomTextDim(false);
+
+        await sleep(2200);
+        if (nudgeActive) nudgeActive = false;
+      }
+
+      window.addEventListener('load', () => {
+        setTimeout(runNudge, 4500);
+      });
+      // --- end scroll hint peek ---
 
       function buildCitations() {
         citationsEl.innerHTML = '';
@@ -643,7 +811,9 @@
         if (state.textOpacity !== textOpacity) {
           state.textOpacity = textOpacity;
           staticTop.style.opacity = textOpacity;
-          staticBottom.style.opacity = textOpacity;
+          if (!nudgeActive) {
+            staticBottom.style.opacity = textOpacity;
+          }
         }
 
         if (scrollTop > CITE_REVEAL) {
