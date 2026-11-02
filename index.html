@@ -218,6 +218,45 @@
     .page-arrow.visible { opacity: 0.7; }
     .page-arrow.hidden { opacity: 0; transform: translateX(-50%) translateY(6px); }
 
+    /* LEFT SCROLLBAR — sits above everything, visible on load */
+    .left-scrollbar {
+      position: fixed;
+      left: calc(3vw + env(safe-area-inset-left, 0px));
+      top: 0;
+      bottom: 0;
+      width: 2px;
+      z-index: 50;
+      pointer-events: none;
+      opacity: 1;
+      transition: opacity 0.4s ease;
+    }
+    .left-scrollbar.hidden {
+      opacity: 0;
+    }
+    .left-scrollbar .track {
+      position: absolute;
+      top: calc(10vh + env(safe-area-inset-top, 0px));
+      bottom: calc(10vh + env(safe-area-inset-bottom, 0px));
+      left: 0;
+      width: 2px;
+      background: rgba(255,255,255,0.06);
+      /* thumb is positioned relative to this track */
+      overflow: hidden;
+    }
+    .left-scrollbar .thumb {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 2px;
+      height: 40px;
+      background: rgba(255,255,255,0.35);
+      will-change: transform, height;
+      transition: background 0.2s ease;
+    }
+    .left-scrollbar.active .thumb {
+      background: rgba(255,255,255,0.65);
+    }
+
     .scroll-layer {
       position: fixed;
       inset: 0;
@@ -268,7 +307,7 @@
       margin-bottom: 0.4em;
       border-bottom: 1px solid rgba(255,255,255,0.12);
     }
-    .key-page .cite { display: flex; gap: 0.8em; white-spacxe: normal; padding: 0.35em 0; }
+    .key-page .cite { display: flex; gap: 0.8em; white-space: normal; padding: 0.35em 0; }
     .key-page .cite .num { color: #ccc; flex: 0 0 auto; min-width: 2.4em; }
     .key-page .cite .name { color: #999; }
 
@@ -315,6 +354,7 @@
       .static-text.top .names-line { font-size: 10px; }
       .key-page { font-size: 10px; letter-spacing: 0.18em; }
       .statements-page .statement-line { font-size: 10px; letter-spacing: 0.22em; }
+      .left-scrollbar { left: calc(2vw + env(safe-area-inset-left, 0px)); }
     }
   </style>
 </head>
@@ -351,6 +391,13 @@
     </svg>
   </div>
 
+  <!-- LEFT SCROLLBAR -->
+  <div class="left-scrollbar" id="leftScrollbar" aria-hidden="true">
+    <div class="track">
+      <div class="thumb" id="leftThumb"></div>
+    </div>
+  </div>
+
   <div class="scroll-layer" id="scrollLayer">
     <div class="scroll-content">
       <div class="page scroll-top-spacer"></div>
@@ -375,8 +422,7 @@
       </div>
     </div>
   </div>
-
-  <script>
+    <script>
     (function() {
       const topImages = [
         'images/t01.png','images/t02.png','images/t03.png','images/t04.png',
@@ -405,7 +451,7 @@
       const bottomCitations = [
         { num: '10', name: 'Ambercycle, Cycora textile recycling material, courtesy of Ambercycle' },
         { num: '11', name: 'Couzens, Vicki, Wurrunggi Biik – Law of the Land, Melbourne, 2019' },
-        { num: '12', name: 'Placeholder image 12' },
+        { num: '12', name: 'Inuit of Pangnirtung, Nunavut, 1953-1958' },
         { num: '13', name: 'Placeholder image 13' },
         { num: '14', name: 'Placeholder image 14' },
         { num: '15', name: 'Placeholder image 15' },
@@ -433,6 +479,9 @@
       const staticTop = document.getElementById('staticTop');
       const staticBottom = document.getElementById('staticBottom');
       const scrollCue = document.getElementById('scrollCue');
+      const leftScrollbar = document.getElementById('leftScrollbar');
+      const leftThumb = document.getElementById('leftThumb');
+      const leftTrack = leftScrollbar.querySelector('.track');
 
       function buildKey() {
         keyContent.innerHTML = '';
@@ -562,7 +611,11 @@
         keyFaded: false,
         arrowVisible: false,
         arrowHidden: false,
-        statementsVisible: [false, false, false]
+        statementsVisible: [false, false, false],
+        scrollbarHidden: false,
+        scrollbarActive: false,
+        lastThumbTransform: null,
+        lastThumbHeight: null
       };
 
       const drag = {
@@ -652,6 +705,43 @@
       const SCROLL_DRIVE = 1.4;
       const MAX_APP_BLUR = 8;
       const PAGE1_FADE_END_FRAC = 0.8;
+
+      function updateScrollbar(scrollTop) {
+        const scrollHeight = scrollLayer.scrollHeight;
+        const clientHeight = scrollLayer.clientHeight;
+        const maxScroll = Math.max(1, scrollHeight - clientHeight);
+
+        const trackHeight = leftTrack.clientHeight;
+        if (trackHeight <= 0) return;
+
+        const ratio = clientHeight / scrollHeight;
+        const thumbH = Math.max(20, Math.min(trackHeight, ratio * trackHeight));
+        const progress = Math.min(1, Math.max(0, scrollTop / maxScroll));
+        const thumbY = progress * (trackHeight - thumbH);
+
+        const hStr = thumbH.toFixed(2) + 'px';
+        if (state.lastThumbHeight !== hStr) {
+          leftThumb.style.height = hStr;
+          state.lastThumbHeight = hStr;
+        }
+        const tStr = `translateY(${thumbY.toFixed(2)}px)`;
+        if (state.lastThumbTransform !== tStr) {
+          leftThumb.style.transform = tStr;
+          state.lastThumbTransform = tStr;
+        }
+
+        const shouldHide = scrollTop >= maxScroll - 1;
+        if (shouldHide !== state.scrollbarHidden) {
+          state.scrollbarHidden = shouldHide;
+          leftScrollbar.classList.toggle('hidden', shouldHide);
+        }
+
+        const isActive = drag.active || Math.abs(state.scrollTopSmoothed) > 0.3;
+        if (isActive !== state.scrollbarActive) {
+          state.scrollbarActive = isActive;
+          leftScrollbar.classList.toggle('active', isActive);
+        }
+      }
 
       function tick(now) {
         if (!now) now = performance.now();
@@ -757,6 +847,8 @@
             el.classList.toggle('visible', inView);
           }
         }
+
+        updateScrollbar(scrollTop);
 
         if (++effectTick % 2 === 0) {
           const vw = window.innerWidth;
